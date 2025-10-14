@@ -2,97 +2,51 @@
 <html lang="de">
 <head>
     <meta charset="utf-8"/>
-    <title>Stefan_Reisekarte_FINAL_OPTIMIERT_MIT_LABELS</title>
+    <title>Stefan_Reisekarte_CESIUM_GLOBUS_DETAILLIERT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css">
     
     <style>
         html, body, #cesiumContainer { height: 100%; margin:0; padding:0; overflow:hidden; }
-        
-        /* CSS für die manuelle Legende */
-        #route-legend {
-            position: absolute; 
-            bottom: 20px; 
-            left: 20px; 
-            z-index: 1000; 
-            background: rgba(255, 255, 255, 0.9); 
-            padding: 10px; 
-            border-radius: 5px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-family: sans-serif;
-            font-size: 13px;
-        }
-        #route-legend .dot { 
-            display: inline-block; 
-            width: 10px; 
-            height: 10px; 
-            border-radius: 50%; 
-            margin-right: 5px; 
-            vertical-align: middle;
-        }
-        .cesium-widget-credits { 
-            display: none !important; 
-        } 
+        /* CSS für die Legende (optional, falls benötigt) */
+        .cesium-widget-credits { display: none !important; } /* Credits unten rechts ausblenden, falls störend */
     </style>
 </head>
 <body>
     <div id="cesiumContainer"></div>
 
-    <div id="route-legend">
-        <b>Reiseroute 2025/2026</b><br>
-        <div style="margin-top: 5px;">
-            <span class="dot" style="background: #d4af37;"></span> Thailand
-        </div>
-        <div>
-            <span class="dot" style="background: #2e8b57;"></span> Vietnam
-        </div>
-        <div>
-            <span class="dot" style="background: #c62828;"></span> Japan
-        </div>
-        <div>
-            <span class="dot" style="background: #666666;"></span> An-/Rückreise
-        </div>
-    </div>
-
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
     
     <script>
+        // Ihr Access Token
         const CESIUM_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YTkzZjgyYy1lNjY3LTRjYzAtYWYzMzAtMjliNjg5MDJmYTYxIiwiaWQiOjM1MDA0NywiaWF0IjoxNzYwMzYxODM5fS5hcDN6QU1GX0s4RVhhZTFiWmRyRHR6Ujhhc3c1TmxsNkY0cmRrdkhvWVk";
         Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
-        // --- KONSTANTEN ---
+        // Farben für Phasen (umgewandelt in Cesium.Color-Objekte)
         const colors = {
-            "Thailand": Cesium.Color.fromCssColorString("#d4af37"),
-            "Vietnam": Cesium.Color.fromCssColorString("#2e8b57"),
-            "Japan": Cesium.Color.fromCssColorString("#c62828"),
-            "Anreise": Cesium.Color.fromCssColorString("#666666"), 
-            "Rueckflug": Cesium.Color.fromCssColorString("#666666")
+            "Thailand": Cesium.Color.fromCssColorString("#d4af37"), // Gold
+            "Vietnam": Cesium.Color.fromCssColorString("#2e8b57"), // Waldgrün
+            "Japan": Cesium.Color.fromCssColorString("#c62828"), // Dunkelrot
+            "Anreise": Cesium.Color.fromCssColorString("#666666"), // Grau (für Flüge)
+            "Rueckflug": Cesium.Color.fromCssColorString("#666666") // Grau
         };
         const defaultColor = Cesium.Color.fromCssColorString("#666666");
 
-        // Höheneinstellungen
-        const MARKER_HEIGHT_METERS = 200;     // Punkte liegen auf 200 m
-        const ARC_HEIGHT_METERS = 300;      // Flugbögen liegen auf 300 m
-
-        // STATUS-ANZEIGE: HIER MUSST DU DEN INDEX MANUELL ÄNDERN
-        const CURRENT_STATION_INDEX = -1; // 0 = München (Abflug), 15 = Ha Giang (Tag 3)
-        // ENDE STATUS-ANZEIGE
-
-        // Stationsliste (Unverändert)
+        // Stationsliste (Die detaillierte Liste aus Ihrem Leaflet-Code)
         const stations = [
-            { name: "München (Abflug)", lat: 48.340993848205116, lon: 11.776813638446827, phase: "Anreise", date: "06.11.2025", note: "Abflug MUC 21:25" },
+            { name: "München (Abflug)", lat: 48.1351, lon: 11.5820, phase: "Anreise", date: "06.11.2025", note: "Abflug MUC 21:25" },
             { name: "Dubai (Zwischenstopp)", lat: 25.2532, lon: 55.2798, phase: "Anreise", date: "07.11.2025", note: "Zwischenstopp DXB (nur Pfad)" }, 
-            { name: "Bangkok (Tag 1)", lat: 13.763240766438173, lon: 100.49687501809402, phase: "Thailand", date: "08.11.2025", note: "Bangkok - Königspalast & Tempel" },
-            { name: "Bangkok (Tag 2)", lat: 13.799670117646631, lon: 100.55058974890065, phase: "Thailand", date: "09.11.2025", note: "Bangkok - Märkte & Kultur" },
-            { name: "Bangkok (Tag 3)", lat: 13.749884779840412, lon: 100.49149841021426, phase: "Thailand", date: "10.11.2025", note: "Tag in Bangkok · Abends Reise nach Chiang Mai" },
+            { name: "Bangkok (Tag 1)", lat: 13.7563, lon: 100.5018, phase: "Thailand", date: "08.11.2025", note: "Bangkok - Königspalast & Tempel" },
+            { name: "Bangkok (Tag 2)", lat: 13.7563, lon: 100.5018, phase: "Thailand", date: "09.11.2025", note: "Bangkok - Märkte & Kultur" },
+            { name: "Bangkok (Tag 3)", lat: 13.7563, lon: 100.5018, phase: "Thailand", date: "10.11.2025", note: "Tag in Bangkok · Abends Reise nach Chiang Mai" },
             { name: "Chiang Mai (Ankunft)", lat: 18.7883, lon: 98.9853, phase: "Thailand", date: "11.11.2025", note: "Chiang Mai - erster Abend" },
             { name: "Chiang Mai (Tag 1)", lat: 18.7883, lon: 98.9853, phase: "Thailand", date: "12.11.2025", note: "Chiang Mai - Tempel, Altstadt" },
             { name: "Pai (Ausflug)", lat: 19.3591, lon: 98.4371, phase: "Thailand", date: "13.11.2025", note: "Tagesausflug zur Pai Canyon / Reisterrassen" }, 
             { name: "Chiang Rai (Ausflug)", lat: 19.9056, lon: 99.8306, phase: "Thailand", date: "14.11.2025", note: "Tagesausflug zum Weißen Tempel (Wat Rong Khun)" }, 
             { name: "Chiang Mai (Tag 2)", lat: 18.7883, lon: 98.9853, phase: "Thailand", date: "15.11.2025", note: "Chiang Mai - Doi Inthanon" },
             { name: "Chiang Mai (Abreisevorbereitung)", lat: 18.7883, lon: 98.9853, phase: "Thailand", date: "16.11.2025", note: "Letzte Erledigungen" },
-            { name: "Reise nach Hanoi", lat: 18.7883, lon: 98.9853, phase: "Anreise", date: "17.11.2025", note: "Flug CNX → HAN (geplant)(nur Pfad)" },
+            { name: "Reise nach Hanoi", lat: 18.7883, lon: 98.9853, phase: "Anreise", date: "17.11.2025", note: "Flug CNX → HAN (geplant)" },
             { name: "Hanoi - Vorbereitung", lat: 21.0285, lon: 105.8542, phase: "Vietnam", date: "18.11.2025", note: "Hanoi - Vorbereitung Ha Giang Loop" },
             { name: "Ha Giang - Loop Start", lat: 22.7900, lon: 104.9850, phase: "Vietnam", date: "19.11.2025", note: "Start Ha Giang Loop (Tag 1)" },
             { name: "Ha Giang - Loop (Tag 2 / Quyết Tiến)", lat: 23.1300, lon: 105.1000, phase: "Vietnam", date: "20.11.2025", note: "Ha Giang Loop (Quyết Tiến / Dong Van)" }, 
@@ -104,13 +58,13 @@
             { name: "Tagesausflug Ninh Binh", lat: 20.2500, lon: 105.9745, phase: "Vietnam", date: "26.11.2025", note: "Tam Coc / Mua Cave" },
             { name: "Hanoi - normaler Tag", lat: 21.0285, lon: 105.8542, phase: "Vietnam", date: "27.11.2025", note: "Hanoi - Erkundung" },
             { name: "Hanoi - Abreisevorbereitung", lat: 21.0285, lon: 105.8542, phase: "Vietnam", date: "28.11.2025", note: "Vorbereitung Weiterreise" },
-            { name: "Reise nach Ho-Chi-Minh-Stadt", lat: 21.0285, lon: 105.8542, phase: "Anreise", date: "29.11.2025", note: "Inlandsflug nach SGN (nur Pfad)" },
+            { name: "Reise nach Ho-Chi-Minh-Stadt", lat: 21.0285, lon: 105.8542, phase: "Anreise", date: "29.11.2025", note: "Inlandsflug nach SGN" },
             { name: "Ho-Chi-Minh-Stadt", lat: 10.7769, lon: 106.7009, phase: "Vietnam", date: "30.11.2025", note: "HCMC - Stadt & Leben" },
             { name: "Mekong-Delta (Tagesausflug)", lat: 10.0452, lon: 105.7715, phase: "Vietnam", date: "01.12.2025", note: "Mekong-Delta Tagestour" },
             { name: "Ho-Chi-Minh-Stadt - normal", lat: 10.7769, lon: 106.7009, phase: "Vietnam", date: "02.12.2025", note: "HCMC - Freizeit" },
             { name: "HCMC - Abreisevorbereitung", lat: 10.7769, lon: 106.7009, phase: "Vietnam", date: "03.12.2025", note: "Packen, Checklisten" },
             { name: "HCMC - Puffertag", lat: 10.7769, lon: 106.7009, phase: "Vietnam", date: "04.12.2025", note: "Reserve / Puffer" },
-            { name: "HCMC (Abflug nach Tokio)", lat: 10.7629, lon: 106.6606, phase: "Anreise", date: "05.12.2025", note: "Nachtflug SGN 23:55 → NRT (nur Pfad)" }, 
+            { name: "HCMC (Abflug nach Tokio)", lat: 10.7629, lon: 106.6606, phase: "Anreise", date: "05.12.2025", note: "Nachtflug SGN 23:55 → NRT" }, 
             { name: "Tokio (Ankunft NRT)", lat: 35.7719, lon: 140.3929, phase: "Japan", date: "06.12.2025", note: "Ankunft NRT 07:35 · Asakusa / Ueno" },
             { name: "Tokio - Tag 2", lat: 35.6762, lon: 139.6503, phase: "Japan", date: "07.12.2025", note: "Tokio erkunden" },
             { name: "Nikkō (Tagesausflug)", lat: 36.7199, lon: 139.6983, phase: "Japan", date: "08.12.2025", note: "Toshogu-Schrein & Natur" },
@@ -127,29 +81,33 @@
             { name: "Osaka", lat: 34.6937, lon: 135.5023, phase: "Japan", date: "19.12.2025", note: "Dotonbori, Streetfood" },
             { name: "Tokio (Rückkehr)", lat: 35.6762, lon: 139.6503, phase: "Japan", date: "20.12.2025", note: "Shinkansen zurück nach Tokio" },
             { name: "Tokio - Abschiedstag", lat: 35.6762, lon: 139.6503, phase: "Japan", date: "21.12.2025", note: "Letzte Einkäufe & Packen" },
-            { name: "Tokio (Abflug HND)", lat: 35.5494, lon: 139.7798, phase: "Japan", date: "22.12.2025", note: "Abflug HND 21:00 → MUC (nur Pfad)" }, 
-            { name: "Peking (Zwischenstopp)", lat: 39.9042, lon: 116.4074, phase: "Rueckflug", date: "22.12.2025", note: "Zwischenstopp PEK (nur Pfad)" },
-            { name: "München (Ankunft)", lat: 48.36958861586051, lon: 11.811849615397932, phase: "Rueckflug", date: "23.12.2025", note: "Ankunft MUC" }
+            { name: "Tokio (Abflug HND)", lat: 35.5494, lon: 139.7798, phase: "Anreise", date: "22.12.2025", note: "Abflug HND 21:00 → MUC" }, 
+            { name: "Peking (Zwischenstopp)", lat: 39.9042, lon: 116.4074, phase: "Anreise", date: "22.12.2025", note: "Zwischenstopp PEK (nur Pfad)" },
+            { name: "München (Ankunft)", lat: 48.1351, lon: 11.5820, phase: "Rueckflug", date: "23.12.2025", note: "Ankunft MUC" }
         ];
 
 
-        // --- CESIUM INITIALISIERUNG ---
+        // 1. Viewer initialisieren und OSM erzwingen
         const viewer = new Cesium.Viewer('cesiumContainer', {
-            scene: {
-                fxaa: true
-            },
-            baseLayerPicker: true, 
+            // Keine Standard-Layer-Auswahl, um Fehler zu vermeiden
+            baseLayerPicker: false, 
             baseLayer: false,
+            // Terrain deaktiviert
             terrainProvider: new Cesium.EllipsoidTerrainProvider(), 
+            
             animation: false,
             timeline: false,
-            sceneModePicker: true,
-            navigationHelpButton: true,
+            geocoder: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
             infoBox: true, 
             fullscreenButton: true,
         });
 
+        // FIX: Entferne ALLE Standard-Layer, die Cesium möglicherweise geladen hat
         viewer.imageryLayers.removeAll();
+
+        // Füge OpenStreetMap als EINEN Layer hinzu
         viewer.imageryLayers.addImageryProvider(
             new Cesium.OpenStreetMapImageryProvider({
                 url: 'https://a.tile.openstreetmap.org/', 
@@ -162,16 +120,17 @@
         let previousPosition = null;
         let previousPhase = null;
 
-        // --- HINZUFÜGEN VON ENTITÄTEN (PUNKTE & LINIEN) ---
+        // 2. Linien und Punkte hinzufügen
         stations.forEach((s, idx) => {
             const phase = s.phase in colors ? s.phase : "Anreise";
             const currentColor = colors[phase];
             
-            // Setze die Position auf 200 m über dem Boden
-            const currentPosition = Cesium.Cartesian3.fromDegrees(s.lon, s.lat, MARKER_HEIGHT_METERS);
+            // Setze die Position 50 km über dem Boden (um CLAMP_TO_GROUND-Fehler zu vermeiden)
+            const currentPosition = Cesium.Cartesian3.fromDegrees(s.lon, s.lat, 50000.0);
             
             
-            // MARKER HINZUFÜGEN (Nur für relevante Punkte)
+            // --- MARKER HINZUFÜGEN ---
+            // Marker nur für *relevante* Punkte setzen, nicht für reine Zwischenstopps (Logik aus Leaflet übernommen)
             if (!s.note.includes("(nur Pfad)")) {
                 
                 const description = `
@@ -185,11 +144,10 @@
                     <small>Reihenfolge: ${idx+1} / ${stations.length}</small>
                 `;
 
-                // 1. Der runde Punkt (Point Entity)
                 entities.add({
                     position: currentPosition,
                     point: {
-                        pixelSize: 15,
+                        pixelSize: 10,
                         color: currentColor,
                         outlineColor: Cesium.Color.BLACK,
                         outlineWidth: 2,
@@ -197,33 +155,13 @@
                     description: description,
                     name: s.name
                 });
-                
-                // 3. NEU: Aktueller Ort Label
-                if (idx === CURRENT_STATION_INDEX) {
-                    entities.add({
-                        position: currentPosition,
-                        name: `Aktueller Ort: ${s.name}`,
-                        label: {
-                            text: `📍 HIER BIN ICH! (${s.date})`,
-                            font: '18pt sans-serif',
-                            fillColor: Cesium.Color.WHITE,
-                            backgroundColor: currentColor.withAlpha(0.8), 
-                            showBackground: true,
-                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                            outlineWidth: 2,
-                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, 
-                            pixelOffset: new Cesium.Cartesian2(0, -30) // Höher über dem Punkt
-                        }
-                    });
-                }
+            }
 
-            } // ENDE: if (!s.note.includes("(nur Pfad)"))
-
-            // SEGMENT LINIE HINZUFÜGEN
+            // --- SEGMENT LINIE HINZUFÜGEN ---
             if (previousPosition) {
-                const i = idx - 1; // Index für den Startpunkt des Segments
-                const isFlightSegment = (s.phase === "Anreise" || s.phase === "Rueckflug" || stations[i].phase === "Anreise");
+                const isFlightSegment = (s.phase === "Anreise" || s.phase === "Rueckflug" || previousPhase === "Anreise");
                 
+                // Farbe: Grau für Flüge, Phasen-Farbe für Boden-Segmente
                 const segmentColor = isFlightSegment ? defaultColor : currentColor;
 
                 // Gestrichelte Linie für Flüge
@@ -234,34 +172,17 @@
                     }) 
                     : segmentColor;
 
-                if (isFlightSegment) {
-                    // Erzeuge die Positionen MIT der erhöhten Bogen-Höhe (300 km)
-                    const startArcPosition = Cesium.Cartesian3.fromDegrees(stations[i].lon, stations[i].lat, ARC_HEIGHT_METERS);
-                    const endArcPosition = Cesium.Cartesian3.fromDegrees(stations[i+1].lon, stations[i+1].lat, ARC_HEIGHT_METERS);
-
-                    entities.add({
-                        name: `Flug: ${stations[i].name} → ${s.name}`,
-                        polyline: {
-                            positions: [startArcPosition, endArcPosition],
-                            width: 3,
-                            material: lineStyle,
-                            arcType: Cesium.ArcType.GEODESIC, // Echter Bogen
-                            clampToGround: false
-                        }
-                    });
-                } else {
-                    // Normale Boden-Linie auf 1km Höhe
-                     entities.add({
-                        name: `Boden: ${stations[i].name} → ${s.name}`,
-                        polyline: {
-                            positions: [previousPosition, currentPosition],
-                            width: 4,
-                            material: lineStyle,
-                            arcType: Cesium.ArcType.NONE,
-                            clampToGround: false
-                        }
-                    });
-                }
+                entities.add({
+                    name: `Segment: ${previousPhase} → ${s.name}`,
+                    polyline: {
+                        positions: [previousPosition, currentPosition],
+                        width: 3,
+                        material: lineStyle,
+                        // Flüge als Bogen (Arc) über die Erdkugel, Landrouten gerade (NONE)
+                        arcType: isFlightSegment ? Cesium.ArcType.GEODESIC : Cesium.ArcType.NONE,
+                        clampToGround: false // Wir nutzen die Höhe von 50km, daher nicht am Boden fixieren
+                    }
+                });
             }
             
             previousPosition = currentPosition;
@@ -269,56 +190,25 @@
         });
 
 
-
-
-
-
-// --- KAMERA-FLUG (ZOOM) ---
-
-// 1. NEU: DEFINIERE EINE GLOBALE STARTPOSITION
-// Position: Zentralasien / Himalaya (Länge/Breite)
-// Höhe: 10.000 km (zeigt die ganze Erde)
-const globalStartDestination = Cesium.Cartesian3.fromDegrees(80.0, 35.0, 10000000.0); 
-
-const relevantStations = stations.filter(s => !s.note.includes("(nur Pfad)"));
-
-// Hier bleibt deine Berechnung für das Rechteck der gesamten Route (Zielort)
-const rect = Cesium.Rectangle.fromDegrees(
-    Math.min(...relevantStations.map(s => s.lon)) + 50,
-    Math.min(...relevantStations.map(s => s.lat)) - 10,
-    Math.max(...relevantStations.map(s => s.lon)) + 5,
-    Math.max(...relevantStations.map(s => s.lat)) + 5
-);
-
-// Der tatsächliche Zielort bleibt gleich (entweder aktuelle Station ODER die gesamte Route)
-const finalTargetDestination = (CURRENT_STATION_INDEX >= 0 && !stations[CURRENT_STATION_INDEX].note.includes("(nur Pfad)")) 
-    ? Cesium.Cartesian3.fromDegrees(stations[CURRENT_STATION_INDEX].lon, stations[CURRENT_STATION_INDEX].lat, 1000000)
-    : rect;
-
-viewer.camera.flyTo({
-    // Starte von der vordefinierten globalen Position
-    destination: finalTargetDestination, // Dies steuert den ENDPUNKT des Flugs
-    duration: 5, // Längere Flugdauer für dramatischen Effekt
-    orientation: {
-        // Starte mit dem Blick in Richtung Norden (0) oder leicht schräg (z.B. 45 Grad)
-		heading: Cesium.Math.toRadians(0),   // ⬅️ Dies ist die Blickrichtung (Azimut)
-        pitch: Cesium.Math.toRadians(-90),   // ⬅️ Dies ist die Neigung (Höhenwinkel)
-        roll: 0.0
-    },
-    // Füge eine Kameraposition VOR dem FlyTo hinzu, um einen echten Übergang zu sehen
-    // Ansonsten startet der Flug direkt vom Zielort aus.
-    // Setze die Kamera zuerst an die globale Position
-    'start' : globalStartDestination, 
-    
-    complete: function() {
-        viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-    }
-});
-
-
-
-
-
+        // 3. Auf die Gesamtroute zoomen
+        
+        // Finde die Bounding Box der relevanten Punkte (ohne Zwischenstopps)
+        const relevantStations = stations.filter(s => !s.note.includes("(nur Pfad)"));
+        const rect = Cesium.Rectangle.fromDegrees(
+            Math.min(...relevantStations.map(s => s.lon)) - 5,
+            Math.min(...relevantStations.map(s => s.lat)) - 5,
+            Math.max(...relevantStations.map(s => s.lon)) + 5,
+            Math.max(...relevantStations.map(s => s.lat)) + 5
+        );
+        
+        viewer.camera.flyTo({
+            destination: rect, // Zoome auf die Bounding Box
+            duration: 4, 
+            complete: function() {
+                // Feineinstellung des Blicks, sobald die Animation abgeschlossen ist
+                viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+            }
+        });
         
     </script>
 </body>
